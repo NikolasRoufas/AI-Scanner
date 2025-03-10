@@ -155,3 +155,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# This Project was conducted for Ionian University as part of the class.
