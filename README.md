@@ -27,8 +27,8 @@ A Flask-based web application that uses OpenAI GPT-4 to analyze CVs/resumes agai
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/cv-analyzer.git
-cd cv-analyzer
+git clone https://github.com/NikolasRoufas/AI-Scanner.git
+cd AI-Scanner
 ```
 
 2. **Set up a virtual environment**
