@@ -1,3 +1,6 @@
+![FriesenjungAI logo](https://drive.google.com/file/d/1mDQRCkyIuE1JN__no9bDBEEkDFevzu_F/view)
+
+
 # CV Analyzer: AI-Powered Resume Optimization
 
 A Flask-based web application that uses OpenAI GPT-4 to analyze CVs/resumes against job descriptions and provide tailored improvement suggestions.
