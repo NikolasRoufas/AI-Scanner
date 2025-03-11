@@ -1,4 +1,4 @@
-![FriesenjungAI logo](https://drive.google.com/file/d/1mDQRCkyIuE1JN__no9bDBEEkDFevzu_F/view)
+![FriesenjungAI logo](https://cdn.discordapp.com/attachments/1061406061317333102/1348993254561022002/Designer.jpeg?ex=67d17b5e&is=67d029de&hm=6a61192d6b8d1ad801e7a386dac5fc31d72e5fd54cbe493c2b1b6dee90ba64dd&)
 
 
 # CV Analyzer: AI-Powered Resume Optimization
