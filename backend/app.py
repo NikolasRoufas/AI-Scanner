@@ -13,6 +13,7 @@ import logging
 import uuid
 import re
 from typing import Dict, List, Tuple, Optional, Any
+import sqlite3
 
 # Configure logging
 logging.basicConfig(
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
 
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -781,4 +782,4 @@ def get_user_job_descriptions():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
