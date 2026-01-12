@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { loginUser } from "../api/auth";
+import { login } from "../api/auth";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -8,7 +8,7 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await loginUser({ email, password });
+    const result = await login({ email, password });
     if (result.success) {
       setMessage(`Login successful! Welcome ${result.email}`);
       // Optionally store user ID in localStorage/session

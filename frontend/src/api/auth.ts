@@ -1,4 +1,3 @@
-// api/auth.ts
 export interface AuthResponse {
   success?: boolean;
   user_id?: number;
@@ -14,7 +13,7 @@ export interface AuthPayload {
 /**
  * Register a new user
  */
-export async function registerUser(payload: AuthPayload): Promise<AuthResponse> {
+export async function register(payload: AuthPayload): Promise<AuthResponse> {
   try {
     const response = await fetch("http://localhost:5001/api/register", {
       method: "POST",
@@ -33,7 +32,7 @@ export async function registerUser(payload: AuthPayload): Promise<AuthResponse> 
 /**
  * Login a user
  */
-export async function loginUser(payload: AuthPayload): Promise<AuthResponse> {
+export async function login(payload: AuthPayload): Promise<AuthResponse> {
   try {
     const response = await fetch("http://localhost:5001/api/login", {
       method: "POST",

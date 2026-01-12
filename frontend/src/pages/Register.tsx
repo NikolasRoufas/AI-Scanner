@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { registerUser } from "../api/auth";
+import { register } from "../api/auth";
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -8,7 +8,7 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await registerUser({ email, password });
+    const result = await register({ email, password });
     if (result.success) {
       setMessage(`Registered successfully! Your ID: ${result.user_id}`);
     } else {
