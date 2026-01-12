@@ -6,7 +6,9 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import sqlite3
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY', ''))
 import pdfplumber
 import docx
 import logging
@@ -37,14 +39,14 @@ app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'docx', 'doc'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Set up OpenAI API key - should be stored in environment variable in production
-openai.api_key = os.environ.get('OPENAI_API_KEY', '') # Replace with your API key
+ # Replace with your API key
 
 # Database setup
 def init_db():
     """Initialize the SQLite database with required tables."""
     with sqlite3.connect(app.config['DATABASE']) as conn:
         cursor = conn.cursor()
-        
+
         # Users table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -54,7 +56,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
-        
+
         # CVs table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS cvs (
@@ -67,7 +69,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
         ''')
-        
+
         # Job descriptions table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS job_descriptions (
@@ -79,7 +81,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
         ''')
-        
+
         # Analysis results table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS analysis_results (
@@ -97,7 +99,7 @@ def init_db():
             FOREIGN KEY (job_description_id) REFERENCES job_descriptions (id)
         )
         ''')
-        
+
         conn.commit()
 
 # Initialize database on startup
@@ -133,7 +135,7 @@ def extract_text_from_docx(file_path: str) -> str:
 def extract_text_from_file(file_path: str) -> str:
     """Extract text from different file types."""
     file_extension = file_path.split('.')[-1].lower()
-    
+
     if file_extension == 'pdf':
         return extract_text_from_pdf(file_path)
     elif file_extension in ['docx', 'doc']:
@@ -172,17 +174,15 @@ def analyze_cv_with_openai(cv_text: str, job_description: str) -> Dict[str, Any]
         - "suggestions": (array of specific improvement points)
         - "improved_cv": (string with the revised CV text)
         """
-        
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo-preview",  # Use appropriate model
-            messages=[
-                {"role": "system", "content": "You are a CV analysis specialist. Respond only with the requested JSON format."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=4000
-        )
-        
+
+        response = client.chat.completions.create(model="gpt-4-turbo-preview",  # Use appropriate model
+        messages=[
+            {"role": "system", "content": "You are a CV analysis specialist. Respond only with the requested JSON format."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2,
+        max_tokens=4000)
+
         # Extract and parse the JSON response
         content = response.choices[0].message.content.strip()
         # Sometimes the API might wrap the JSON in ```json ``` blocks, so we need to extract it
@@ -190,17 +190,17 @@ def analyze_cv_with_openai(cv_text: str, job_description: str) -> Dict[str, Any]
             content = re.search(r'```json\s*([\s\S]*?)\s*```', content).group(1)
         elif "```" in content:
             content = re.search(r'```\s*([\s\S]*?)\s*```', content).group(1)
-            
+
         result = json.loads(content)
-        
+
         # Ensure all required fields are present
         required_fields = ["score", "feedback", "suggestions", "improved_cv"]
         for field in required_fields:
             if field not in result:
                 result[field] = "" if field != "suggestions" else []
-        
+
         return result
-    
+
     except Exception as e:
         logger.error(f"Error in OpenAI analysis: {str(e)}")
         # Return a default structure in case of error
@@ -250,30 +250,30 @@ def upload_cv():
     """
     if 'cv' not in request.files:
         return jsonify({"error": "No file part"}), 400
-    
+
     file = request.files['cv']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
-    
+
     if not allowed_file(file.filename):
         return jsonify({"error": f"File type not allowed. Supported types: {', '.join(app.config['ALLOWED_EXTENSIONS'])}"}), 400
-    
+
     try:
         # Get user ID from request or use anonymous user (0)
         user_id = request.form.get('user_id', 0)
-        
+
         # Generate a unique filename to avoid collisions
         original_filename = secure_filename(file.filename)
         file_extension = original_filename.rsplit('.', 1)[1].lower()
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        
+
         # Save the file
         file.save(file_path)
-        
+
         # Extract text from the file
         cv_text = extract_text_from_file(file_path)
-        
+
         # Save to database
         with sqlite3.connect(app.config['DATABASE']) as conn:
             cursor = conn.cursor()
@@ -283,7 +283,7 @@ def upload_cv():
             ''', (user_id, original_filename, file_path, cv_text))
             conn.commit()
             cv_id = cursor.lastrowid
-        
+
         return jsonify({
             "success": True,
             "cv_id": cv_id,
@@ -291,7 +291,7 @@ def upload_cv():
             "file_path": file_path,
             "content_preview": cv_text[:200] + "..." if len(cv_text) > 200 else cv_text
         })
-    
+
     except Exception as e:
         logger.error(f"Error in upload_cv: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -307,14 +307,14 @@ def save_job_description():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         title = data.get('title')
         content = data.get('content')
         user_id = data.get('user_id', 0)  # Default to 0 for anonymous users
-        
+
         if not title or not content:
             return jsonify({"error": "Title and content are required"}), 400
-        
+
         with sqlite3.connect(app.config['DATABASE']) as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -323,13 +323,13 @@ def save_job_description():
             ''', (user_id, title, content))
             conn.commit()
             job_id = cursor.lastrowid
-        
+
         return jsonify({
             "success": True,
             "job_description_id": job_id,
             "title": title
         })
-    
+
     except Exception as e:
         logger.error(f"Error in save_job_description: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -345,46 +345,46 @@ def analyze_cv():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         cv_id = data.get('cv_id')
         job_description_id = data.get('job_description_id')
         user_id = data.get('user_id', 0)
-        
+
         if not cv_id or not job_description_id:
             return jsonify({"error": "CV ID and Job Description ID are required"}), 400
-        
+
         # Retrieve CV and job description from database
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             # Get CV content
             cursor.execute('SELECT content FROM cvs WHERE id = ?', (cv_id,))
             cv_row = cursor.fetchone()
             if not cv_row:
                 return jsonify({"error": "CV not found"}), 404
             cv_text = cv_row['content']
-            
+
             # Get job description content
             cursor.execute('SELECT content FROM job_descriptions WHERE id = ?', (job_description_id,))
             job_row = cursor.fetchone()
             if not job_row:
                 return jsonify({"error": "Job description not found"}), 404
             job_description = job_row['content']
-        
+
         # Use OpenAI to analyze the CV against the job description
         analysis_result = analyze_cv_with_openai(cv_text, job_description)
-        
+
         # Save the analysis result to database
         result_id = save_analysis_result(user_id, cv_id, job_description_id, analysis_result)
-        
+
         # Return the analysis result
         return jsonify({
             "success": True,
             "result_id": result_id,
             "analysis": analysis_result
         })
-    
+
     except Exception as e:
         logger.error(f"Error in analyze_cv: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -397,11 +397,11 @@ def get_analysis_history():
     """
     try:
         user_id = request.args.get('user_id', 0)
-        
+
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             cursor.execute('''
             SELECT ar.id, ar.score, ar.created_at, 
                    c.file_name as cv_name, 
@@ -412,10 +412,10 @@ def get_analysis_history():
             WHERE ar.user_id = ?
             ORDER BY ar.created_at DESC
             ''', (user_id,))
-            
+
             rows = cursor.fetchall()
             results = []
-            
+
             for row in rows:
                 results.append({
                     "id": row['id'],
@@ -424,12 +424,12 @@ def get_analysis_history():
                     "job_title": row['job_title'],
                     "created_at": row['created_at']
                 })
-            
+
             return jsonify({
                 "success": True,
                 "history": results
             })
-    
+
     except Exception as e:
         logger.error(f"Error in get_analysis_history: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -444,7 +444,7 @@ def get_analysis_result(result_id):
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             cursor.execute('''
             SELECT ar.*, c.file_name as cv_name, c.content as cv_content,
                    jd.title as job_title, jd.content as job_description
@@ -453,14 +453,14 @@ def get_analysis_result(result_id):
             JOIN job_descriptions jd ON ar.job_description_id = jd.id
             WHERE ar.id = ?
             ''', (result_id,))
-            
+
             row = cursor.fetchone()
             if not row:
                 return jsonify({"error": "Analysis result not found"}), 404
-            
+
             # Parse the suggestions JSON string
             suggestions = json.loads(row['suggestions']) if row['suggestions'] else []
-            
+
             result = {
                 "id": row['id'],
                 "score": row['score'],
@@ -473,12 +473,12 @@ def get_analysis_result(result_id):
                 "job_description": row['job_description'],
                 "created_at": row['created_at']
             }
-            
+
             return jsonify({
                 "success": True,
                 "result": result
             })
-    
+
     except Exception as e:
         logger.error(f"Error in get_analysis_result: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -493,17 +493,17 @@ def register_user():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         email = data.get('email')
         password = data.get('password')
-        
+
         if not email or not password:
             return jsonify({"error": "Email and password are required"}), 400
-        
+
         # In a real application, you should hash the password
         # For this example, we'll store it as plain text (not recommended for production)
         password_hash = password  # Replace with proper hashing in production
-        
+
         with sqlite3.connect(app.config['DATABASE']) as conn:
             cursor = conn.cursor()
             try:
@@ -513,7 +513,7 @@ def register_user():
                 ''', (email, password_hash))
                 conn.commit()
                 user_id = cursor.lastrowid
-                
+
                 return jsonify({
                     "success": True,
                     "user_id": user_id,
@@ -521,7 +521,7 @@ def register_user():
                 })
             except sqlite3.IntegrityError:
                 return jsonify({"error": "Email already registered"}), 409
-    
+
     except Exception as e:
         logger.error(f"Error in register_user: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -536,29 +536,29 @@ def login_user():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         email = data.get('email')
         password = data.get('password')
-        
+
         if not email or not password:
             return jsonify({"error": "Email and password are required"}), 400
-        
+
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
             user = cursor.fetchone()
-            
+
             if not user or user['password_hash'] != password:  # Replace with proper password checking in production
                 return jsonify({"error": "Invalid email or password"}), 401
-            
+
             return jsonify({
                 "success": True,
                 "user_id": user['id'],
                 "email": user['email']
             })
-    
+
     except Exception as e:
         logger.error(f"Error in login_user: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -574,7 +574,7 @@ def job_search():
     try:
         query = request.args.get('query', '')
         location = request.args.get('location', '')
-        
+
         # Mock response with sample jobs
         sample_jobs = [
             {
@@ -602,14 +602,14 @@ def job_search():
                 "url": "https://example.com/jobs/3"
             }
         ]
-        
+
         return jsonify({
             "success": True,
             "jobs": sample_jobs,
             "query": query,
             "location": location
         })
-    
+
     except Exception as e:
         logger.error(f"Error in job_search: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -624,25 +624,25 @@ def send_application():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         job_id = data.get('job_id')
         cv_id = data.get('cv_id')
         user_id = data.get('user_id')
         cover_letter = data.get('cover_letter', '')
-        
+
         if not job_id or not cv_id:
             return jsonify({"error": "Job ID and CV ID are required"}), 400
-        
+
         # In a real implementation, this would send an email or use an API
         # to submit the application to the job platform
-        
+
         return jsonify({
             "success": True,
             "message": "Application sent successfully (simulation)",
             "job_id": job_id,
             "cv_id": cv_id
         })
-    
+
     except Exception as e:
         logger.error(f"Error in send_application: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -655,46 +655,46 @@ def export_improved_cv(result_id):
     """
     try:
         format_type = request.args.get('format', 'txt')  # Default to txt if not specified
-        
+
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             cursor.execute('''
             SELECT ar.improved_cv, c.file_name
             FROM analysis_results ar
             JOIN cvs c ON ar.cv_id = c.id
             WHERE ar.id = ?
             ''', (result_id,))
-            
+
             row = cursor.fetchone()
             if not row:
                 return jsonify({"error": "Analysis result not found"}), 404
-            
+
             improved_cv = row['improved_cv']
             original_filename = row['file_name'].rsplit('.', 1)[0]  # Remove extension
-            
+
             # Create temporary file
             temp_dir = tempfile.gettempdir()
-            
+
             if format_type == 'txt':
                 file_path = os.path.join(temp_dir, f"{original_filename}_improved.txt")
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(improved_cv)
-                
+
                 return send_from_directory(
                     directory=temp_dir,
                     path=f"{original_filename}_improved.txt",
                     as_attachment=True,
                     download_name=f"{original_filename}_improved.txt"
                 )
-            
+
             # For other formats, you'd need to implement conversion
             # This could be done with libraries like python-docx for DOCX
             # or reportlab for PDF
-            
+
             return jsonify({"error": f"Export format '{format_type}' not supported yet"}), 400
-    
+
     except Exception as e:
         logger.error(f"Error in export_improved_cv: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -709,33 +709,33 @@ def get_user_cvs():
         user_id = request.args.get('user_id')
         if not user_id:
             return jsonify({"error": "User ID is required"}), 400
-        
+
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             cursor.execute('''
             SELECT id, file_name, created_at
             FROM cvs
             WHERE user_id = ?
             ORDER BY created_at DESC
             ''', (user_id,))
-            
+
             rows = cursor.fetchall()
             cvs = []
-            
+
             for row in rows:
                 cvs.append({
                     "id": row['id'],
                     "file_name": row['file_name'],
                     "created_at": row['created_at']
                 })
-            
+
             return jsonify({
                 "success": True,
                 "cvs": cvs
             })
-    
+
     except Exception as e:
         logger.error(f"Error in get_user_cvs: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -750,33 +750,33 @@ def get_user_job_descriptions():
         user_id = request.args.get('user_id')
         if not user_id:
             return jsonify({"error": "User ID is required"}), 400
-        
+
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             cursor.execute('''
             SELECT id, title, created_at
             FROM job_descriptions
             WHERE user_id = ?
             ORDER BY created_at DESC
             ''', (user_id,))
-            
+
             rows = cursor.fetchall()
             job_descriptions = []
-            
+
             for row in rows:
                 job_descriptions.append({
                     "id": row['id'],
                     "title": row['title'],
                     "created_at": row['created_at']
                 })
-            
+
             return jsonify({
                 "success": True,
                 "job_descriptions": job_descriptions
             })
-    
+
     except Exception as e:
         logger.error(f"Error in get_user_job_descriptions: {str(e)}")
         return jsonify({"error": str(e)}), 500
