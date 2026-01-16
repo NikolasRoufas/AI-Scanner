@@ -207,6 +207,8 @@ marimo/_lsp/
 __marimo__/
 
 backend/uploads/*
+# Local database
+backend/cv_scanner.db
 
 # Frontend (React)
 */node_modules/*
