@@ -1,162 +1,195 @@
-![FriesenjungAI logo](https://cdn.discordapp.com/attachments/1061406061317333102/1348993254561022002/Designer.jpeg?ex=67d17b5e&is=67d029de&hm=6a61192d6b8d1ad801e7a386dac5fc31d72e5fd54cbe493c2b1b6dee90ba64dd&)
+# AI-Scanner
 
+AI-Scanner is a full-stack web application that analyzes a candidate’s resume (CV) against a job description and generates an AI-powered compatibility report, including a match score and qualitative feedback.
 
-# CV Analyzer: AI-Powered Resume Optimization
+The system consists of:
 
-A Flask-based web application that uses OpenAI GPT-4 to analyze CVs/resumes against job descriptions and provide tailored improvement suggestions.
+* A **Flask backend** that handles file uploads, parsing, and AI analysis
+* A **React (Vite) frontend** that provides the user interface
 
-## 🚀 Features
+---
 
-- **CV Processing**: Upload and extract text from PDF and DOCX files
-- **Job Description Management**: Save and organize job postings
-- **AI Analysis**: Powered by OpenAI GPT-4 to compare CVs against job requirements
-- **Detailed Feedback**: 
-  - Match scoring (0-100)
-  - Strengths and weaknesses assessment
-  - Specific improvement suggestions
-  - AI-generated optimized version of your CV
-- **User Management**: Register, login, and track your analyses
-- **Export Functionality**: Download your improved CV
-- **Analysis History**: Review past analyses and track progress
+## Features
 
-## 📋 Prerequisites
+* Upload CVs in PDF or DOCX format
+* Input or select job descriptions
+* AI-powered resume ↔ job matching
+* Match score and detailed analysis report
+* User authentication (basic)
+* Clean modern frontend (Vite + React)
 
-- Python 3.8 or higher
-- OpenAI API key
-- pip (Python package manager)
+---
 
-## ⚙️ Installation
+## Project Structure
 
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/NikolasRoufas/AI-Scanner.git
-cd AI-Scanner
+```
+AI-Scanner/
+├── backend/
+│   ├── app.py
+│   ├── cv_scanner.db
+│   ├── uploads/
+│   └── venv/
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.js
+└── README.md
 ```
 
-2. **Set up a virtual environment**
+---
+
+## Requirements
+
+### Backend
+
+* Python 3.9+
+* pip
+* OpenAI API key
+
+### Frontend
+
+* Node.js 18+
+* npm
+
+---
+
+## Backend Setup (Flask)
+
+### 1. Navigate to backend
 
 ```bash
-# Create virtual environment
-python -m venv venv
+cd backend
+```
 
-# Activate it (Windows)
-venv\Scripts\activate
+### 2. Create and activate virtual environment
 
-# Activate it (macOS/Linux)
+```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. **Install dependencies**
+### 3. Install dependencies
 
 ```bash
-pip install flask flask-cors pdfplumber python-docx openai sqlite3 werkzeug
+pip install flask flask-cors pdfplumber python-docx openai werkzeug
 ```
 
-4. **Set up the OpenAI API key**
+### 4. Set environment variables
 
 ```bash
-# For Windows
-set OPENAI_API_KEY=your_openai_api_key_here
-
-# For macOS/Linux
-export OPENAI_API_KEY=your_openai_api_key_here
+export OPENAI_API_KEY="your_openai_api_key"
+export OPENAI_MODEL="gpt-4o-mini"
 ```
 
-For persistent configuration, consider using a `.env` file with python-dotenv.
+`gpt-4o-mini` is recommended for availability, speed, and cost.
 
-5. **Create upload directory**
+### 5. Create uploads directory (if missing)
 
 ```bash
 mkdir uploads
 ```
 
-## 🏃‍♂️ Running the Application
-
-Start the Flask server:
+### 6. Run backend server
 
 ```bash
 python app.py
 ```
 
-The application will run on http://localhost:5000 by default.
+The backend will run at:
 
-## 🔧 API Endpoints
+```
+http://localhost:5000
+```
 
-### Authentication
-- `POST /api/register` - Create a new user account
-- `POST /api/login` - Log in to an existing account
+---
 
-### CV Management
-- `POST /api/upload-cv` - Upload a CV file (PDF/DOCX)
-- `GET /api/user-cvs` - Get all CVs for a user
+## Frontend Setup (React + Vite)
 
-### Job Descriptions
-- `POST /api/job-description` - Save a job description
-- `GET /api/user-job-descriptions` - Get all job descriptions for a user
+### 1. Navigate to frontend
 
-### Analysis
-- `POST /api/analyze` - Analyze a CV against a job description
-- `GET /api/analysis-history` - Get analysis history for a user
-- `GET /api/analysis-result/{result_id}` - Get a specific analysis result
-- `GET /api/export-cv/{result_id}` - Export an improved CV as a downloadable file
+```bash
+cd frontend
+```
 
-### System
-- `GET /api/health` - Health check endpoint
+### 2. Install dependencies
 
-### Job Search (Placeholder Implementation)
-- `GET /api/job-search` - Search for jobs (currently returns mock data)
-- `POST /api/send-application` - Send a job application (simulation)
+```bash
+npm install
+```
 
-## 📐 Database Structure
+### 3. Run development server
 
-The application uses SQLite with the following schema:
+```bash
+npm run dev
+```
 
-- **users**: User accounts and authentication
-  - id, email, password_hash, created_at
+The frontend will run at:
 
-- **cvs**: Stored CV files and their extracted content
-  - id, user_id, file_name, file_path, content, created_at
+```
+http://localhost:5173
+```
 
-- **job_descriptions**: Stored job descriptions
-  - id, user_id, title, content, created_at
+---
 
-- **analysis_results**: Results from CV analysis
-  - id, user_id, cv_id, job_description_id, score, feedback, suggestions, improved_cv, created_at
+## Running the Full Application
 
-## 🔒 Security Considerations for Production
+Open **two terminals**:
 
-The current implementation is suitable for development but requires these enhancements for production:
+### Terminal 1 — Backend
 
-1. **Secure API Key Storage**: Use environment variables or a secure vault for the OpenAI API key
-2. **Password Security**: Implement proper password hashing using bcrypt or similar
-3. **Authentication**: Add JWT or session-based authentication
-4. **CORS Configuration**: Restrict to trusted domains only
-5. **HTTPS**: Configure SSL/TLS encryption
-6. **Input Validation**: Add more robust request validation
-7. **Rate Limiting**: Implement API rate limiting
-8. **File Validation**: Enhanced validation of uploaded files
-9. **Database Optimization**: Consider a more robust database for production scale
+```bash
+cd backend
+source venv/bin/activate
+python app.py
+```
 
-## 🌐 Frontend Development
+### Terminal 2 — Frontend
 
-This repository contains only the backend API. To create a complete application:
+```bash
+cd frontend
+npm run dev
+```
 
-1. Develop a frontend using a framework like React, Vue.js, or Angular
-2. Connect to the API endpoints
-3. Create UI components for:
-   - User registration/login
-   - CV upload
-   - Job description entry
-   - Analysis results display
-   - Results history
+Then open your browser at:
 
-## 🤝 Contributing
+```
+http://localhost:5173
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+---
 
-## 📄 License
+## Common Issues
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### `Missing script: "start"`
 
-# This Project was conducted for Ionian University as part of the class.
+The frontend uses **Vite**, not Create-React-App.
+
+Use:
+
+```bash
+npm run dev
+```
+
+---
+
+### OpenAI model error (404 / model_not_found)
+
+If you see errors related to `gpt-4-turbo-preview`, that model is deprecated.
+
+Use:
+
+```bash
+export OPENAI_MODEL="gpt-4o-mini"
+```
+
+Or update the model directly in `backend/app.py`.
+
+---
+
+## Notes
+
+* The backend and frontend must both be running for the app to function correctly.
+* The OpenAI API key is required for analysis features.
+* This project is intended for educational and experimental use.
+
