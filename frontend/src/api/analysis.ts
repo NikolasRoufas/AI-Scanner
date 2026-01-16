@@ -32,3 +32,10 @@ export async function getAnalysisResult(resultId: number) {
   const res = await fetch(`${API_BASE_URL}/analysis-result/${resultId}`);
   return res.json();
 }
+
+export async function deleteAnalysisResult(resultId: number) {
+  const res = await fetch(`${API_BASE_URL}/analysis-result/${resultId}`, {
+    method: "DELETE",
+  });
+  return res.json();
+}

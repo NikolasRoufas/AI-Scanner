@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, Cpu, X, ArrowRight, Clock, Calendar } from 'lucide-react';
+import { Upload, FileText, Cpu, X, Clock, Calendar, Trash2 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import { getUserCVs, uploadCV } from '../api/cvs';
+import { getUserCVs, uploadCV, deleteCV } from '../api/cvs';
 import { useAuth } from '../context/AuthContext';
 
 interface CV {
@@ -95,6 +95,21 @@ const UploadCV: React.FC = () => {
       alert("Failed to upload CV. Please try again.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this CV? This cannot be undone.")) return;
+    try {
+      const res = await deleteCV(id);
+      if (res.success) {
+        setCvHistory(prev => prev.filter(item => item.id !== id));
+      } else {
+        alert("Failed to delete CV.");
+      }
+    } catch (error) {
+      console.error("Failed to delete CV", error);
+      alert("An error occurred while deleting.");
     }
   };
 
@@ -256,8 +271,12 @@ const UploadCV: React.FC = () => {
                         {new Date(cv.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-primary">
-                      <ArrowRight className="w-4 h-4" />
+                    <Button
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(cv.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 ))}

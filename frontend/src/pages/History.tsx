@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, FileText, ArrowUpRight, Briefcase, Hash, Trophy, X, CheckCircle, Lightbulb, FileCheck, Loader2 } from 'lucide-react';
+import { Search, Calendar, FileText, ArrowUpRight, Briefcase, Hash, Trophy, X, CheckCircle, Lightbulb, FileCheck, Loader2, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/ui/Button';
-import { getAnalysisHistory, getAnalysisResult } from '../api/analysis';
+import { getAnalysisHistory, getAnalysisResult, deleteAnalysisResult } from '../api/analysis';
 import { useAuth } from '../context/AuthContext';
 
 interface AnalysisResult {
@@ -28,6 +28,7 @@ const History: React.FC = () => {
   // Report Modal State
   const [selectedResult, setSelectedResult] = useState<FullAnalysisResult | null>(null);
   const [loadingReportId, setLoadingReportId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -60,6 +61,24 @@ const History: React.FC = () => {
       alert("Could not load report details.");
     } finally {
       setLoadingReportId(null);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this analysis record? This cannot be undone.")) return;
+    setDeletingId(id);
+    try {
+      const res = await deleteAnalysisResult(id);
+      if (res.success) {
+        setHistory(prev => prev.filter(item => item.id !== id));
+      } else {
+        alert("Failed to delete analysis.");
+      }
+    } catch (error) {
+      console.error("Failed to delete analysis", error);
+      alert("An error occurred while deleting.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -141,13 +160,26 @@ const History: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                       {item.job_title}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(item.id)}
+                        disabled={deletingId === item.id || loadingReportId === item.id}
+                      >
+                        {deletingId === item.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-muted-foreground hover:text-primary"
                         onClick={() => handleViewReport(item.id)}
-                        disabled={loadingReportId === item.id}
+                        disabled={loadingReportId === item.id || deletingId === item.id}
                       >
                         {loadingReportId === item.id ? (
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />

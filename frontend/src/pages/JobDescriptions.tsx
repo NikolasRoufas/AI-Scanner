@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Building2, Briefcase, ChevronRight, SlidersHorizontal, Plus, X, Calendar } from 'lucide-react';
+import { Search, MapPin, Building2, Briefcase, ChevronRight, SlidersHorizontal, Plus, X, Calendar, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { saveJobDescription, getUserJobDescriptions } from '../api/jobs';
+import { saveJobDescription, getUserJobDescriptions, deleteJobDescription } from '../api/jobs';
 import { useAuth } from '../context/AuthContext';
 
 interface Job {
@@ -74,6 +74,23 @@ const JobDescriptions: React.FC = () => {
             alert("Failed to save job description");
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (e: React.MouseEvent, id: number) => {
+        e.stopPropagation(); // Prevent opening details modal
+        if (!confirm("Are you sure you want to delete this job description?")) return;
+
+        try {
+            const res = await deleteJobDescription(id);
+            if (res.success) {
+                setJobs(prev => prev.filter(job => job.id !== id));
+            } else {
+                alert("Failed to delete job.");
+            }
+        } catch (error) {
+            console.error("Failed to delete job", error);
+            alert("An error occurred while deleting.");
         }
     };
 
@@ -170,7 +187,15 @@ const JobDescriptions: React.FC = () => {
                                 </div>
 
                                 {/* Action */}
-                                <div className="flex items-center md:self-center">
+                                <div className="flex items-center md:self-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        className="group/del text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-2 h-auto"
+                                        onClick={(e) => handleDelete(e, job.id)}
+                                        title="Delete Job"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
                                     <Button
                                         variant="ghost"
                                         className="group/btn text-primary hover:bg-primary/10"

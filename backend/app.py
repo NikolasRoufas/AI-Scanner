@@ -484,6 +484,34 @@ def get_analysis_result(result_id):
         logger.error(f"Error in get_analysis_result: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/analysis-result/<int:result_id>', methods=['DELETE'])
+def delete_analysis_result(result_id):
+    """
+    Endpoint to delete a specific analysis result.
+    Requires: result_id as path parameter
+    """
+    try:
+        with sqlite3.connect(app.config['DATABASE']) as conn:
+            cursor = conn.cursor()
+            
+            # Check if exists first (optional but good for 404)
+            cursor.execute('SELECT id FROM analysis_results WHERE id = ?', (result_id,))
+            if not cursor.fetchone():
+                return jsonify({"error": "Analysis result not found"}), 404
+
+            cursor.execute('DELETE FROM analysis_results WHERE id = ?', (result_id,))
+            conn.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "Analysis result deleted successfully",
+                "id": result_id
+            })
+
+    except Exception as e:
+        logger.error(f"Error in delete_analysis_result: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/register', methods=['POST'])
 def register_user():
     """
@@ -739,6 +767,72 @@ def get_user_cvs():
 
     except Exception as e:
         logger.error(f"Error in get_user_cvs: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/cv/<int:cv_id>', methods=['DELETE'])
+def delete_cv(cv_id):
+    """
+    Endpoint to delete a specific CV.
+    Requires: cv_id as path parameter
+    """
+    try:
+        with sqlite3.connect(app.config['DATABASE']) as conn:
+            cursor = conn.cursor()
+            
+            # Check if exists
+            cursor.execute('SELECT id FROM cvs WHERE id = ?', (cv_id,))
+            if not cursor.fetchone():
+                return jsonify({"error": "CV not found"}), 404
+
+            # NOTE: Ideally we should also delete the file from disk here
+            # For now, we only delete the database record
+            cursor.execute('DELETE FROM cvs WHERE id = ?', (cv_id,))
+            
+            # Cascade delete related analysis results (optional but good practice)
+            cursor.execute('DELETE FROM analysis_results WHERE cv_id = ?', (cv_id,))
+            
+            conn.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "CV deleted successfully",
+                "id": cv_id
+            })
+
+    except Exception as e:
+        logger.error(f"Error in delete_cv: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/job-description/<int:job_id>', methods=['DELETE'])
+def delete_job_description(job_id):
+    """
+    Endpoint to delete a specific Job Description.
+    Requires: job_id as path parameter
+    """
+    try:
+        with sqlite3.connect(app.config['DATABASE']) as conn:
+            cursor = conn.cursor()
+            
+            # Check if exists
+            cursor.execute('SELECT id FROM job_descriptions WHERE id = ?', (job_id,))
+            if not cursor.fetchone():
+                return jsonify({"error": "Job description not found"}), 404
+
+            cursor.execute('DELETE FROM job_descriptions WHERE id = ?', (job_id,))
+            
+            # Cascade delete related analysis results
+            cursor.execute('DELETE FROM analysis_results WHERE job_description_id = ?', (job_id,))
+            
+            conn.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "Job description deleted successfully",
+                "id": job_id
+            })
+
+    except Exception as e:
+        logger.error(f"Error in delete_job_description: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/user-job-descriptions', methods=['GET'])

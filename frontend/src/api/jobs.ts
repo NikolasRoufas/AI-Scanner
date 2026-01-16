@@ -22,3 +22,10 @@ export async function getUserJobDescriptions(userId: number) {
   );
   return res.json();
 }
+
+export async function deleteJobDescription(jobId: number) {
+  const res = await fetch(`${API_BASE_URL}/job-description/${jobId}`, {
+    method: "DELETE",
+  });
+  return res.json();
+}
