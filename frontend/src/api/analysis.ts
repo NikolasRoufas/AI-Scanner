@@ -23,7 +23,7 @@ export async function getAnalysisHistory(userId?: number) {
   if (!id) return [];
 
   const res = await fetch(
-    `${API_BASE_URL}/analysis-history?user_id=${id}`
+    `${API_BASE_URL}/analysis-history/${id}`
   );
   return res.json();
 }

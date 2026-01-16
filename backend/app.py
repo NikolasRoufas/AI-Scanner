@@ -389,14 +389,15 @@ def analyze_cv():
         logger.error(f"Error in analyze_cv: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/analysis-history', methods=['GET'])
-def get_analysis_history():
+@app.route('/api/analysis-history/<int:user_id>', methods=['GET'])
+def get_analysis_history(user_id):
     """
     Endpoint to retrieve analysis history for a user.
-    Requires: user_id as query parameter
+    Requires: user_id as path parameter
     """
     try:
-        user_id = request.args.get('user_id', 0)
+        if not user_id:
+             return jsonify({"error": "User ID is required"}), 400
 
         with sqlite3.connect(app.config['DATABASE']) as conn:
             conn.row_factory = sqlite3.Row
