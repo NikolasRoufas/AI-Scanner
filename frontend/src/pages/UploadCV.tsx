@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, CheckCircle, AlertCircle, Cpu, Sparkles, X, ArrowRight, Clock, Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Upload, FileText, Cpu, X, ArrowRight, Clock, Calendar } from 'lucide-react';
 import Button from '../components/ui/Button';
-import { getUserCVs } from '../api/cvs';
+import { getUserCVs, uploadCV } from '../api/cvs';
 import { useAuth } from '../context/AuthContext';
 
 interface CV {
@@ -21,7 +20,6 @@ const UploadCV: React.FC = () => {
   const [cvHistory, setCvHistory] = useState<CV[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -71,15 +69,33 @@ const UploadCV: React.FC = () => {
     }
   };
 
-  // Simulate upload process for demo purposes
-  const handleAnalyze = async () => {
-    if (!file) return;
+  const handleUpload = async () => {
+    if (!file || !user) return;
     setIsUploading(true);
-    // Emulate network request
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsUploading(false);
-    // Navigate or show success (Placeholder logic)
-    navigate('/analyze');
+    try {
+      const formData = new FormData();
+      formData.append('cv', file);
+      formData.append('user_id', user.id.toString());
+
+      const response = await uploadCV(formData);
+
+      if (response.success || response.cv_id) {
+        // Refresh history
+        const data = await getUserCVs(user.id);
+        if (data.cvs) setCvHistory(data.cvs);
+        else if (Array.isArray(data)) setCvHistory(data);
+
+        setFile(null);
+        // Optional: Add a toast notification here if available
+      } else {
+        alert("Upload failed: " + (response.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Upload failed", error);
+      alert("Failed to upload CV. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -96,10 +112,10 @@ const UploadCV: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="grid gap-8 lg:grid-cols-3"
+        className="max-w-4xl mx-auto space-y-8"
       >
         {/* Main Upload Area */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="space-y-8">
           <div
             className={`
                 relative overflow-hidden rounded-3xl border-2 border-dashed transition-all duration-300 ease-out
@@ -174,16 +190,16 @@ const UploadCV: React.FC = () => {
 
                     <Button
                       className="w-full h-12 text-base shadow-lg shadow-indigo-500/25 relative overflow-hidden group/btn"
-                      onClick={handleAnalyze}
+                      onClick={handleUpload}
                       disabled={isUploading}
                     >
                       {isUploading ? (
                         <span className="flex items-center gap-2">
-                          <Cpu className="w-4 h-4 animate-spin" /> Analyzing...
+                          <Cpu className="w-4 h-4 animate-spin" /> Uploading...
                         </span>
                       ) : (
                         <span className="flex items-center gap-2 justify-center">
-                          Start Analysis <Sparkles className="w-4 h-4 group-hover/btn:animate-pulse" />
+                          Upload CV <Upload className="w-4 h-4 group-hover/btn:animate-bounce" />
                         </span>
                       )}
                     </Button>
@@ -247,61 +263,9 @@ const UploadCV: React.FC = () => {
                 ))}
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Sidebar / Info */}
-        <div className="space-y-6">
-          <div className="rounded-3xl bg-indigo-900 text-white p-8 relative overflow-hidden shadow-2xl shadow-indigo-900/20 group hover:shadow-indigo-900/30 transition-shadow">
-            <div className="relative z-10 space-y-4">
-              <div className="p-3 bg-white/10 w-fit rounded-xl backdrop-blur-sm border border-white/10">
-                <Sparkles className="w-6 h-6 text-yellow-300" />
-              </div>
-              <h3 className="text-xl font-bold">Pro Analysis</h3>
-              <p className="text-indigo-100 text-sm leading-relaxed">
-                Our AI rescans your resume against 50+ ATS parameters to ensure you pass the initial screening.
-              </p>
-              <ul className="space-y-3 pt-2">
-                {[
-                  "Keyword Optimization",
-                  "Formatting Check",
-                  "Action Verb Analysis"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-indigo-50">
-                    <CheckCircle className="w-4 h-4 text-green-400" /> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Decorative background */}
-            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-indigo-500 rounded-full blur-[60px] opacity-50 group-hover:opacity-60 transition-opacity" />
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500 rounded-full blur-[60px] opacity-30" />
           </div>
-
-          <div className="rounded-3xl border border-border/50 glass-panel p-6 space-y-4">
-            <h4 className="font-semibold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-500" />
-              Tips for best results
-            </h4>
-            <ul className="text-sm space-y-3 text-muted-foreground pl-1">
-              <li className="flex gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                Ensure text is selectable (not an image scan).
-              </li>
-              <li className="flex gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                Use standard headings like "Experience", "Education".
-              </li>
-              <li className="flex gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                Avoid complex columns or graphics that confuse ATS.
-              </li>
-            </ul>
-            <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-primary gap-1">
-              View Formatting Guide <ArrowRight className="w-3 h-3" />
-            </Button>
-          </div>
+          {/* Sidebar removed for focused upload tab view */}
         </div>
       </motion.div>
     </div>
