@@ -18,20 +18,17 @@ export async function analyzeCV(
   return res.json();
 }
 
-export async function getAnalysisHistory(userId: number) {
+export async function getAnalysisHistory(userId?: number) {
+  const id = userId || localStorage.getItem("user_id");
+  if (!id) return [];
+
   const res = await fetch(
-    `${API_BASE_URL}/analysis-history?user_id=${userId}`
+    `${API_BASE_URL}/analysis-history?user_id=${id}`
   );
   return res.json();
 }
 
 export async function getAnalysisResult(resultId: number) {
-  const res = await fetch(
-    `${API_BASE_URL}/analysis-result/${resultId}`
-  );
+  const res = await fetch(`${API_BASE_URL}/analysis-result/${resultId}`);
   return res.json();
-}
-
-export function exportImprovedCV(resultId: number) {
-  window.open(`${API_BASE_URL}/export-cv/${resultId}?format=txt`, "_blank");
 }

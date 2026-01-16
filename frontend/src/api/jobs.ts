@@ -1,14 +1,16 @@
 import { API_BASE_URL } from "./config";
 
-export async function saveJobDescription(
-  userId: number,
-  title: string,
-  content: string
-) {
+interface JobDescriptionPayload {
+  user_id: number;
+  title: string;
+  content: string;
+}
+
+export async function saveJobDescription(payload: JobDescriptionPayload) {
   const res = await fetch(`${API_BASE_URL}/job-description`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId, title, content }),
+    body: JSON.stringify(payload),
   });
 
   return res.json();
