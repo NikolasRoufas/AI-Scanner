@@ -34,10 +34,10 @@ const JobDescriptions: React.FC = () => {
         try {
             const data = await getUserJobDescriptions(user.id);
             if (data.success) {
-                const mappedJobs = data.job_descriptions.map((job: any) => ({
+                const mappedJobs = data.jobs.map((job: any) => ({
                     id: job.id,
                     title: job.title,
-                    description: "Full description content is not currently available in list view.",
+                    description: job.content,
                     created_at: job.created_at
                 }));
                 setJobs(mappedJobs);

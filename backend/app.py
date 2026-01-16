@@ -757,25 +757,26 @@ def get_user_job_descriptions():
             cursor = conn.cursor()
 
             cursor.execute('''
-            SELECT id, title, created_at
+            SELECT id, title, content, created_at
             FROM job_descriptions
             WHERE user_id = ?
             ORDER BY created_at DESC
             ''', (user_id,))
 
             rows = cursor.fetchall()
-            job_descriptions = []
+            jobs = []
 
             for row in rows:
-                job_descriptions.append({
+                jobs.append({
                     "id": row['id'],
                     "title": row['title'],
+                    "content": row['content'],
                     "created_at": row['created_at']
                 })
 
             return jsonify({
                 "success": True,
-                "job_descriptions": job_descriptions
+                "jobs": jobs
             })
 
     except Exception as e:
