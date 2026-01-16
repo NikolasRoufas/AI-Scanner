@@ -1,14 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, CheckCircle, AlertCircle, Cpu, Sparkles, X, ArrowRight } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Cpu, Sparkles, X, ArrowRight, Clock, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
+import { getUserCVs } from '../api/cvs';
+import { useAuth } from '../context/AuthContext';
+
+interface CV {
+  id: number;
+  file_name: string;
+  created_at: string;
+}
 
 const UploadCV: React.FC = () => {
+  const { user } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  const [cvHistory, setCvHistory] = useState<CV[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      setIsLoadingHistory(true);
+      try {
+        const data = await getUserCVs(user.id);
+        if (data.cvs) {
+          setCvHistory(data.cvs);
+        } else if (Array.isArray(data)) {
+          // Fallback catch if API structure differs
+          setCvHistory(data);
+        }
+      } catch (err) {
+        console.error("Failed to load CV history", err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    fetchHistory();
+  }, [user]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -65,7 +99,7 @@ const UploadCV: React.FC = () => {
         className="grid gap-8 lg:grid-cols-3"
       >
         {/* Main Upload Area */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-8">
           <div
             className={`
                 relative overflow-hidden rounded-3xl border-2 border-dashed transition-all duration-300 ease-out
@@ -171,6 +205,48 @@ const UploadCV: React.FC = () => {
                 backgroundSize: '24px 24px'
               }}
             />
+          </div>
+
+          {/* History Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold flex items-center gap-2 text-foreground/80">
+              <Clock className="w-5 h-5 text-primary" />
+              Your Uploaded CVs
+            </h3>
+
+            {isLoadingHistory ? (
+              <div className="text-sm text-muted-foreground animate-pulse">Loading previously uploaded CVs...</div>
+            ) : cvHistory.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-muted/30 border border-dashed border-border flex flex-col items-center justify-center text-center text-muted-foreground">
+                <FileText className="w-8 h-8 mb-2 opacity-50" />
+                <p>No previous uploads found.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {cvHistory.map((cv) => (
+                  <div
+                    key={cv.id}
+                    className="group p-4 rounded-2xl bg-cardGlass border border-border/50 hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5 flex items-start gap-4"
+                  >
+                    <div className="p-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl group-hover:scale-110 transition-transform">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-sm truncate text-foreground" title={cv.file_name}>
+                        {cv.file_name}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(cv.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-primary">
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
