@@ -29,7 +29,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     const navItems = [
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/upload', label: 'Analyze CV', icon: Upload },
+        { path: '/analyze', label: 'Run Analysis', icon: Sparkles },
+        { path: '/upload', label: 'Upload CV', icon: Upload },
         { path: '/jobs', label: 'Job Descriptions', icon: FileText },
         { path: '/history', label: 'History', icon: HistoryIcon },
     ];
