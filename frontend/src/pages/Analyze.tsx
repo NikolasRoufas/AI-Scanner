@@ -1,186 +1,278 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Play, FileText, Briefcase, CheckCircle, Download, RefreshCw, AlertCircle } from 'lucide-react';
-import Card from '../components/ui/Card';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronRight, Download, Share2 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import { useAuth } from '../context/AuthContext';
-import { getUserCVs } from '../api/cvs';
-import { getUserJobDescriptions } from '../api/jobs';
-import { analyzeCV } from '../api/analysis';
-// Import markdown renderer if needed for rich text feedback, for now simple text
-
 
 const Analyze: React.FC = () => {
-  const { user } = useAuth();
-  const [cvs, setCvs] = useState<any[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [selectedCV, setSelectedCV] = useState<number | null>(null);
-  const [selectedJob, setSelectedJob] = useState<number | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<any | null>(null);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
+  // Simulate analysis loading
   useEffect(() => {
-    if (user?.id) {
-      getUserCVs(user.id).then(setCvs).catch(console.error);
-      getUserJobDescriptions(user.id).then(setJobs).catch(console.error);
-    }
-  }, [user]);
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const handleAnalyze = async () => {
-    if (!selectedCV || !selectedJob || !user?.id) return;
-    setIsAnalyzing(true);
-    setError('');
-    setResult(null);
+  if (loading) {
+    return <AnalysisSkeleton />;
+  }
 
-    // Simulate loading steps for better UX
-    try {
-      const data = await analyzeCV(user.id, selectedCV, selectedJob);
-      if (data.error) throw new Error(data.error);
-      setResult(data);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Analysis failed';
-      setError(message);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-500 border-green-500';
-    if (score >= 60) return 'text-yellow-500 border-yellow-500';
-    return 'text-red-500 border-red-500';
-  };
+  const overallScore = 78;
 
   return (
-    <div className="space-y-8 pb-12">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Analyze CV</h1>
-        <p className="text-[hsl(var(--muted-foreground))]">Match your resume against a job description to get AI-powered insights.</p>
-      </div>
-
-      {!result ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="flex flex-col h-[400px]">
-            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-[hsl(var(--primary))]" /> Select CV
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-              {cvs.map(cv => (
-                <div
-                  key={cv.id}
-                  onClick={() => setSelectedCV(cv.id)}
-                  className={`p - 4 rounded - xl border cursor - pointer transition - all flex items - center justify - between ${selectedCV === cv.id
-                    ? 'bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary))] ring-1 ring-[hsl(var(--primary))]'
-                    : 'border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]'
-                    } `}
-                >
-                  <span className="font-medium truncate">{cv.file_name}</span>
-                  {selectedCV === cv.id && <CheckCircle className="h-5 w-5 text-[hsl(var(--primary))]" />}
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="flex flex-col h-[400px]">
-            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-[hsl(var(--primary))]" /> Select Job Description
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-              {jobs.map(job => (
-                <div
-                  key={job.id}
-                  onClick={() => setSelectedJob(job.id)}
-                  className={`p - 4 rounded - xl border cursor - pointer transition - all flex items - center justify - between ${selectedJob === job.id
-                    ? 'bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary))] ring-1 ring-[hsl(var(--primary))]'
-                    : 'border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]'
-                    } `}
-                >
-                  <span className="font-medium truncate">{job.title}</span>
-                  {selectedJob === job.id && <CheckCircle className="h-5 w-5 text-[hsl(var(--primary))]" />}
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <div className="col-span-1 lg:col-span-2 flex justify-center">
-            {error && (
-              <div className="mb-4 text-red-500 flex items-center gap-2">
-                <AlertCircle className="h-5 w-5" /> {error}
-              </div>
-            )}
-            <Button
-              size="lg"
-              disabled={!selectedCV || !selectedJob || isAnalyzing}
-              onClick={handleAnalyze}
-              className="w-full max-w-md shadow-xl shadow-purple-500/20"
-            >
-              {isAnalyzing ? (
-                <>Processing...</>
-              ) : (
-                <>Start Analysis <Play className="ml-2 h-5 w-5" /></>
-              )}
-            </Button>
-          </div>
+    <div className="space-y-8 pb-12 max-w-6xl mx-auto">
+      {/* Header Section */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">Analysis Results</h1>
+          <p className="text-muted-foreground mt-1 text-lg">Found <span className="text-primary font-semibold">4 opportunities</span> for improvement in your resume.</p>
         </div>
-      ) : (
+        <div className="flex gap-3">
+          <Button variant="outline" className="gap-2">
+            <Share2 className="w-4 h-4" /> Share
+          </Button>
+          <Button className="gap-2 shadow-lg shadow-primary/25">
+            <Download className="w-4 h-4" /> Download Report
+          </Button>
+        </div>
+      </header>
+
+      {/* Score Overview Cards */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Main Score Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="md:col-span-1 bg-gradient-to-br from-[hsl(var(--primary))] to-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-500/20"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Score Card */}
-            <Card className="flex flex-col items-center justify-center p-8">
-              <h3 className="text-lg font-medium text-[hsl(var(--muted-foreground))] mb-4">Match Score</h3>
-              <div className={`relative w - 40 h - 40 rounded - full border - 8 flex items - center justify - center ${getScoreColor(result.score)} `}>
-                <span className="text-5xl font-bold">{result.score}%</span>
-              </div>
-            </Card>
+          <div className="relative z-10 flex flex-col items-center text-center h-full justify-center">
+            <h3 className="text-lg font-medium text-indigo-100 mb-6">Overall Score</h3>
 
-            {/* Quick Feedback */}
-            <Card className="md:col-span-2 p-6 flex flex-col justify-center">
-              <h3 className="text-xl font-semibold mb-4">Analysis Summary</h3>
-              <div className="prose prose-invert max-w-none text-sm">
-                {/* Very simple rendering if 'feedback' is just text */}
-                <p>{result.feedback}</p>
+            {/* Circular Progress Ring */}
+            <div className="relative w-48 h-48">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="96"
+                  cy="96"
+                  r="88"
+                  stroke="currentColor"
+                  strokeWidth="12"
+                  fill="transparent"
+                  className="text-indigo-900/50"
+                />
+                <motion.circle
+                  cx="96"
+                  cy="96"
+                  r="88"
+                  stroke="currentColor"
+                  strokeWidth="12"
+                  fill="transparent"
+                  strokeDasharray={2 * Math.PI * 88}
+                  strokeDashoffset={2 * Math.PI * 88 * (1 - overallScore / 100)}
+                  className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                  initial={{ strokeDashoffset: 2 * Math.PI * 88 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 88 * (1 - overallScore / 100) }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-6xl font-bold tracking-tighter">{overallScore}</span>
+                <span className="text-sm font-medium text-indigo-200 uppercase tracking-widest mt-1">Excellent</span>
               </div>
-            </Card>
+            </div>
+
+            <div className="mt-8 w-full">
+              <div className="flex justify-between text-sm text-indigo-200 mb-2">
+                <span>ATS Compatibility</span>
+                <span>High</span>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: "85%" }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className="bg-emerald-400 h-full rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card>
-              <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" /> Improvements
-              </h3>
-              <div className="prose prose-invert max-w-none text-sm text-[hsl(var(--muted-foreground))]">
-                {/* If suggestions is a list or markdown */}
-                <div className="whitespace-pre-wrap">{result.suggestions}</div>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold">Optimized CV</h3>
-                <Button variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" /> Export
-                </Button>
-              </div>
-              <div className="bg-[hsl(var(--background))] p-4 rounded-xl border border-[hsl(var(--border))] max-h-[500px] overflow-y-auto font-mono text-sm whitespace-pre-wrap">
-                {result.improved_cv}
-              </div>
-            </Card>
-          </div>
-
-          <div className="flex justify-center pt-8">
-            <Button variant="secondary" onClick={() => setResult(null)}>
-              <RefreshCw className="mr-2 h-4 w-4" /> New Analysis
-            </Button>
-          </div>
+          {/* Decorative Background */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-[100px] opacity-10 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500 rounded-full blur-[80px] opacity-20 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
         </motion.div>
-      )}
+
+        {/* Key Metrics grid */}
+        <div className="md:col-span-2 grid sm:grid-cols-2 gap-4">
+          <MetricCard
+            title="Hard Skills"
+            value="8/10"
+            status="success"
+            description="Excellent match with job requirements."
+            delay={0.1}
+          />
+          <MetricCard
+            title="Soft Skills"
+            value="6/10"
+            status="warning"
+            description="Consider adding more leadership examples."
+            delay={0.2}
+          />
+          <MetricCard
+            title="Formatting"
+            value="10/10"
+            status="success"
+            description="Perfectly parsed by standard ATS."
+            delay={0.3}
+          />
+          <MetricCard
+            title="Impact Metrics"
+            value="4/10"
+            status="error"
+            description="Quantify your achievements with numbers."
+            delay={0.4}
+          />
+        </div>
+      </div>
+
+      {/* Detailed Breakdown */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold tracking-tight">Detailed Breakdown</h2>
+          <Button variant="ghost" size="sm" className="text-muted-foreground">Collapse All</Button>
+        </div>
+
+        <div className="grid gap-4">
+          <ExpandableSection
+            title="Missing Keywords"
+            score="Critical"
+            type="error"
+            content={
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">The following keywords were found in the job description but are missing from your resume:</p>
+                <div className="flex flex-wrap gap-2">
+                  {['React Native', 'GraphQL', 'System Design', 'CI/CD'].map(k => (
+                    <span key={k} className="px-3 py-1 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 rounded-lg text-sm font-medium border border-red-100 dark:border-red-900/50 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3 h-3" /> {k}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+
+          <ExpandableSection
+            title="Experience Section Optimization"
+            score="Suggestion"
+            type="warning"
+            content={
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Your 'Senior Developer' role lists tasks but lacks results. Try changing <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded">Managed team</span> to <span className="font-medium text-foreground">"Led team of 5 to deliver project X, increasing revenue by Y%"</span>.
+              </p>
+            }
+          />
+
+          <ExpandableSection
+            title="Education & Certifications"
+            score="Passed"
+            type="success"
+            content={
+              <p className="text-sm text-muted-foreground">
+                Your education section is well-structured and easy to read. No changes needed.
+              </p>
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 };
+
+// Components
+
+const MetricCard = ({ title, value, status, description, delay }: any) => {
+  const statusColors = {
+    success: "text-green-600 bg-green-50 border-green-100",
+    warning: "text-amber-600 bg-amber-50 border-amber-100",
+    error: "text-red-600 bg-red-50 border-red-100",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay }}
+      className="bg-card glass-panel rounded-2xl p-6 border border-border shadow-sm hover-card"
+    >
+      <div className="flex justify-between items-start mb-4">
+        <h4 className="font-semibold text-foreground">{title}</h4>
+        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColors[status as keyof typeof statusColors]}`}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </span>
+      </div>
+      <div className="text-2xl font-bold mb-2">{value}</div>
+      <p className="text-sm text-muted-foreground leading-snug">{description}</p>
+    </motion.div>
+  );
+}
+
+const ExpandableSection = ({ title, score, type, content }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const icons = {
+    success: <CheckCircle2 className="w-5 h-5 text-green-500" />,
+    warning: <AlertTriangle className="w-5 h-5 text-amber-500" />,
+    error: <XCircle className="w-5 h-5 text-red-500" />,
+  };
+
+  return (
+    <div className="bg-card rounded-2xl border border-border overflow-hidden transition-all duration-200">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors"
+      >
+        <div className="flex items-center gap-4">
+          {icons[type as keyof typeof icons]}
+          <span className="font-semibold text-foreground text-left">{title}</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground hidden sm:block">{score}</span>
+          {isOpen ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+        </div>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-5 pt-0 border-t border-border/50 bg-slate-50/50">
+              <div className="pt-4">
+                {content}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+const AnalysisSkeleton = () => (
+  <div className="space-y-8 animate-pulse">
+    <div className="h-10 bg-slate-200 rounded-lg w-1/3" />
+    <div className="grid md:grid-cols-3 gap-6">
+      <div className="h-64 bg-slate-200 rounded-3xl" />
+      <div className="col-span-2 grid grid-cols-2 gap-4">
+        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-200 rounded-2xl" />)}
+      </div>
+    </div>
+    <div className="space-y-4">
+      {[1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-200 rounded-2xl" />)}
+    </div>
+  </div>
+)
 
 export default Analyze;

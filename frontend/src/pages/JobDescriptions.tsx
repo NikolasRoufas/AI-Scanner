@@ -1,137 +1,132 @@
-import React, { useState, useEffect } from 'react';
-
-import { Plus, Briefcase, Search } from 'lucide-react';
-import Card from '../components/ui/Card';
+import React, { useState } from 'react';
+import { Search, MapPin, Building2, Briefcase, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Modal from '../components/ui/Modal';
-import { useAuth } from '../context/AuthContext';
-// We'll need to create or update this API file
-import { saveJobDescription, getUserJobDescriptions } from '../api/jobs';
+
+// Mock Data
+const JOBS = [
+    {
+        id: 1,
+        title: "Senior Frontend Engineer",
+        company: "TechFlow Solutions",
+        location: "Remote",
+        type: "Full-time",
+        logo: "TF",
+        color: "bg-blue-100 text-blue-700",
+        description: "We are looking for an experienced React developer to lead our core product team."
+    },
+    {
+        id: 2,
+        title: "Product Designer",
+        company: "Creative Zen",
+        location: "New York, NY",
+        type: "Hybrid",
+        logo: "CZ",
+        color: "bg-purple-100 text-purple-700",
+        description: "Join our award-winning design team creating next-gen financial tools."
+    },
+    {
+        id: 3,
+        title: "Backend Specialist",
+        company: "DataMinds",
+        location: "San Francisco, CA",
+        type: "Full-time",
+        logo: "DM",
+        color: "bg-emerald-100 text-emerald-700",
+        description: "Scale our distributed systems handling millions of transactions daily."
+    },
+];
 
 const JobDescriptions: React.FC = () => {
-    const { user } = useAuth();
-    const [jobs, setJobs] = useState<{ id: number; title: string; content: string; created_at: string }[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newJob, setNewJob] = useState({ title: '', content: '' });
-    const [isSaving, setIsSaving] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-
-    useEffect(() => {
-        fetchJobs();
-    }, [user]);
-
-    const fetchJobs = async () => {
-        if (!user?.id) return;
-        try {
-            const data = await getUserJobDescriptions(user.id);
-            setJobs(data || []);
-        } catch (err) {
-            console.error("Failed to fetch jobs", err);
-        }
-    };
-
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!user?.id) return;
-        setIsSaving(true);
-        try {
-            await saveJobDescription({ ...newJob, user_id: user.id });
-            setIsModalOpen(false);
-            setNewJob({ title: '', content: '' });
-            fetchJobs();
-        } catch (err) {
-            console.error("Failed to save job", err);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const filteredJobs = jobs.filter(job =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.content.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const [searchTerm, setSearchTerm] = useState("");
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-8">
+            <header className="flex flex-col md:flex-row justify-between items-end md:items-center gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold">Job Descriptions</h1>
-                    <p className="text-[hsl(var(--muted-foreground))]">Manage job postings to target your resume.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Discover Jobs</h1>
+                    <p className="text-muted-foreground mt-1">Find roles that match your skills based on your analysis.</p>
                 </div>
-                <Button onClick={() => setIsModalOpen(true)} className="shadow-lg shadow-purple-500/20">
-                    <Plus className="mr-2 h-5 w-5" /> Add New Job
+                <Button className="shadow-lg shadow-primary/20">
+                    Upload New Job
+                </Button>
+            </header>
+
+            {/* Search & Filter */}
+            <div className="flex gap-4 p-1">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <input
+                        type="text"
+                        placeholder="Search by job title, company, or keywords..."
+                        className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Button variant="outline" className="h-12 w-12 px-0 flex-shrink-0">
+                    <SlidersHorizontal className="w-5 h-5 text-muted-foreground" />
                 </Button>
             </div>
 
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[hsl(var(--muted-foreground))]" />
-                <input
-                    type="text"
-                    placeholder="Search saved jobs..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-12 pl-10 pr-4 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                />
-            </div>
+            {/* Job List */}
+            <div className="grid gap-4">
+                {JOBS.map((job, index) => (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        key={job.id}
+                        className="group bg-cardGlass rounded-2xl p-6 border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 flex flex-col md:flex-row gap-6 glass-panel"
+                    >
+                        {/* Logo */}
+                        <div className={`w-16 h-16 rounded-xl flex items-center justify-center font-bold text-xl shrink-0 shadow-sm ${job.color}`}>
+                            {job.logo}
+                        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredJobs.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-[hsl(var(--muted-foreground))]">
-                        {searchTerm ? 'No jobs found matching your search.' : 'No job descriptions saved yet. Add one to get started!'}
-                    </div>
-                ) : (
-                    filteredJobs.map((job) => (
-                        <Card key={job.id} className="group hover:border-[hsl(var(--primary)/0.5)] transition-all cursor-pointer flex flex-col h-[280px]">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="h-10 w-10 rounded-lg bg-[hsl(var(--secondary))] flex items-center justify-center">
-                                    <Briefcase className="h-5 w-5 text-[hsl(var(--primary))]" />
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
+                                <div>
+                                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                                        {job.title}
+                                    </h3>
+                                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                                        <span className="flex items-center gap-1.5">
+                                            <Building2 className="w-4 h-4" /> {job.company}
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <MapPin className="w-4 h-4" /> {job.location}
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <Briefcase className="w-4 h-4" /> {job.type}
+                                        </span>
+                                    </div>
                                 </div>
-                                {/* Placeholder for actions like delete */}
+                                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-emerald-50 text-emerald-700 shadow-sm">
+                                    92% Match
+                                </span>
                             </div>
-
-                            <h3 className="text-lg font-semibold mb-2 line-clamp-1" title={job.title}>{job.title}</h3>
-                            <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4 line-clamp-4 flex-1">
-                                {job.content}
+                            <p className="mt-4 text-sm text-muted-foreground/80 line-clamp-2 leading-relaxed">
+                                {job.description}
                             </p>
+                        </div>
 
-                            <div className="mt-auto pt-4 border-t border-[hsl(var(--border))] flex justify-between items-center text-sm text-[hsl(var(--muted-foreground))]">
-                                <span>{new Date(job.created_at).toLocaleDateString()}</span>
-                                <Button variant="ghost" size="sm" className="h-8 px-2 text-[hsl(var(--primary))] opacity-0 group-hover:opacity-100 transition-opacity">
-                                    View Details
-                                </Button>
-                            </div>
-                        </Card>
-                    ))
-                )}
+                        {/* Action */}
+                        <div className="flex items-center md:self-center">
+                            <Button variant="ghost" className="group/btn text-primary hover:bg-primary/5">
+                                View Details
+                                <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                            </Button>
+                        </div>
+                    </motion.div>
+                ))}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Job Description">
-                <form onSubmit={handleSave} className="space-y-4">
-                    <Input
-                        label="Job Title"
-                        value={newJob.title}
-                        onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
-                        placeholder="e.g. Senior Product Designer"
-                        required
-                        autoFocus
-                    />
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none text-[hsl(var(--muted-foreground))]">Job Description</label>
-                        <textarea
-                            className="flex min-h-[150px] w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background)/0.5)] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] disabled:cursor-not-allowed disabled:opacity-50 resize-y"
-                            placeholder="Paste the full job description text here..."
-                            value={newJob.content}
-                            onChange={(e) => setNewJob({ ...newJob, content: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div className="flex justify-end gap-2 mt-6">
-                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button type="submit" isLoading={isSaving}>Save Job</Button>
-                    </div>
-                </form>
-            </Modal>
+            {/* Pagination Placeholder */}
+            <div className="flex justify-center pt-8">
+                <Button variant="ghost" className="text-muted-foreground">Load More Jobs</Button>
+            </div>
         </div>
     );
 };

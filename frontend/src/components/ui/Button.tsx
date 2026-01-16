@@ -27,11 +27,11 @@ const Button: React.FC<ButtonProps> = ({
     const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50";
 
     const variants = {
-        primary: "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-purple-900/20",
-        secondary: "bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))] hover:bg-[hsl(var(--secondary)/0.8)]",
-        outline: "border border-[hsl(var(--border))] bg-transparent hover:bg-[hsl(var(--accent)/0.1)] text-[hsl(var(--foreground))]",
-        ghost: "hover:bg-[hsl(var(--accent)/0.1)] text-[hsl(var(--foreground))]",
-        danger: "bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:bg-[hsl(var(--destructive)/0.9)]",
+        primary: "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.9)] shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40",
+        secondary: "bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))] hover:bg-[hsl(var(--secondary)/0.8)] border border-transparent",
+        outline: "border border-[hsl(var(--border))] bg-transparent hover:bg-[hsl(var(--accent)/0.5)] text-[hsl(var(--foreground))]",
+        ghost: "hover:bg-[hsl(var(--accent)/0.5)] text-[hsl(var(--foreground))]",
+        danger: "bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:bg-[hsl(var(--destructive)/0.9)] shadow-lg shadow-red-500/20",
     };
 
     const sizes = {
