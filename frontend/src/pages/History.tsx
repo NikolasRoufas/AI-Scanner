@@ -187,7 +187,7 @@ const History: React.FC = () => {
                     <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
                       Analysis Report
                       <span className={`px-3 py-1 rounded-full text-base font-bold ${selectedResult.score >= 80 ? 'bg-green-100 text-green-700' :
-                          selectedResult.score >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                        selectedResult.score >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
                         }`}>
                         Score: {selectedResult.score.toFixed(1)}
                       </span>
@@ -209,18 +209,18 @@ const History: React.FC = () => {
 
                   {/* Feedback Section */}
                   <section className="space-y-3">
-                    <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-                      <FileText className="w-5 h-5 text-indigo-500" />
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground dark:text-slate-200">
+                      <FileText className="w-5 h-5 text-indigo-500 " />
                       Executive Feedback
                     </h3>
-                    <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                    <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 text-foreground/90 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
                       {selectedResult.feedback || "No specific feedback provided."}
                     </div>
                   </section>
 
                   {/* Suggestions Section */}
                   <section className="space-y-3">
-                    <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground dark:text-slate-200">
                       <Lightbulb className="w-5 h-5 text-amber-500" />
                       Key Suggestions
                     </h3>
@@ -229,7 +229,7 @@ const History: React.FC = () => {
                         {selectedResult.suggestions.map((suggestion, idx) => (
                           <div key={idx} className="flex gap-3 p-3 rounded-xl bg-card border border-border/50 shadow-sm">
                             <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                            <span className="text-sm text-muted-foreground">{suggestion}</span>
+                            <span className="text-sm text-muted-foreground dark:text-slate-200">{suggestion}</span>
                           </div>
                         ))}
                       </div>
@@ -240,11 +240,11 @@ const History: React.FC = () => {
 
                   {/* Improved CV Section */}
                   <section className="space-y-3">
-                    <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground dark:text-slate-200">
                       <FileCheck className="w-5 h-5 text-emerald-500" />
                       Improved CV Version
                     </h3>
-                    <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-border font-mono text-xs md:text-sm text-foreground/80 overflow-x-auto whitespace-pre-wrap max-h-[400px]">
+                    <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-border font-mono text-xs md:text-sm text-foreground/80 dark:text-slate-100 overflow-x-auto whitespace-pre-wrap max-h-[400px]">
                       {selectedResult.improved_cv || "No improved version generated."}
                     </div>
                   </section>

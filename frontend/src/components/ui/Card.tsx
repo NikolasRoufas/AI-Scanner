@@ -12,7 +12,7 @@ const Card: React.FC<CardProps> = ({ className, children, ...props }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-                "glass-panel rounded-2xl p-6 text-[hsl(var(--card-foreground))]",
+                "glass-panel rounded-2xl p-6 text-card-foreground border border-white/10 shadow-xl shadow-black/5",
                 className
             )}
             {...props}

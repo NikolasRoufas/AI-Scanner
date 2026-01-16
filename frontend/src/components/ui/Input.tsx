@@ -1,5 +1,6 @@
-import { type InputHTMLAttributes, forwardRef } from 'react';
-import { cn } from './Button'; // Reusing cn utility
+import { type InputHTMLAttributes, forwardRef, useState } from 'react';
+import { cn } from './Button';
+import { motion } from 'framer-motion';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -8,27 +9,57 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
     ({ className, type, label, error, ...props }, ref) => {
+        const [isFocused, setIsFocused] = useState(false);
+
         return (
             <div className="w-full space-y-2">
                 {label && (
-                    <label className="text-sm font-medium leading-none text-[hsl(var(--muted-foreground))] peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <label className={cn(
+                        "text-sm font-medium leading-none transition-colors",
+                        error ? "text-destructive" : isFocused ? "text-primary" : "text-muted-foreground",
+                        "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    )}>
                         {label}
                     </label>
                 )}
-                <div className="relative">
+                <div className="relative group">
+                    {/* Animated background glow on focus */}
+                    <div className={cn(
+                        "absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary/50 to-indigo-400/50 opacity-0 blur transition duration-500",
+                        isFocused && "opacity-75 blur-md"
+                    )} />
+
                     <input
                         type={type}
                         className={cn(
-                            "flex h-11 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background)/0.5)] px-3 py-2 text-sm ring-offset-[hsl(var(--background))] file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
-                            error && "border-[hsl(var(--destructive))] focus-visible:ring-[hsl(var(--destructive))]",
+                            "relative flex h-12 w-full rounded-xl border border-input bg-background/60 backdrop-blur-sm px-4 py-2 text-sm shadow-sm transition-all duration-200",
+                            "placeholder:text-muted-foreground/70",
+                            "file:border-0 file:bg-transparent file:text-sm file:font-medium",
+                            "focus-visible:outline-none focus-visible:ring-0 focus-visible:border-primary/50", // Custom focus handling below
+                            "disabled:cursor-not-allowed disabled:opacity-50",
+                            error && "border-destructive focus-visible:border-destructive",
                             className
                         )}
                         ref={ref}
+                        onFocus={(e) => {
+                            setIsFocused(true);
+                            props.onFocus?.(e);
+                        }}
+                        onBlur={(e) => {
+                            setIsFocused(false);
+                            props.onBlur?.(e);
+                        }}
                         {...props}
                     />
                 </div>
                 {error && (
-                    <p className="text-sm font-medium text-[hsl(var(--destructive))]">{error}</p>
+                    <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs font-medium text-destructive flex items-center gap-1"
+                    >
+                        {error}
+                    </motion.p>
                 )}
             </div>
         );
